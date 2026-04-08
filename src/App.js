@@ -7,6 +7,7 @@ function App() {
   const [note, setNote] = useState("");
   const [saved, setSaved] = useState(false);
   const [notes, setNotes] = useState([]);
+  const [showNotes, setShowNotes] = useState(false);
 
   const fetchNotes = async () => {
     const q = query(collection(db, "notes"), orderBy("createdAt", "desc"));
@@ -26,7 +27,7 @@ function App() {
     setSaved(true);
     setNote("");
     setTimeout(() => setSaved(false), 3000);
-    fetchNotes(); // refresh the list after saving
+    fetchNotes();
   };
 
   const now = new Date();
@@ -61,6 +62,18 @@ function App() {
           </div>
         </div>
 
+        {/* ── Sidebar Notes Button ── */}
+        <button
+          className="sidebar-notes-btn"
+          onClick={() => {
+            setShowNotes(!showNotes);
+            fetchNotes();
+          }}
+        >
+          {showNotes ? "✕ Hide Notes" : "☰ View Saved Notes"}
+          <span className="notes-count">{notes.length}</span>
+        </button>
+
         <div className="sidebar-bottom">
           <div className="ornament">✦</div>
         </div>
@@ -69,47 +82,56 @@ function App() {
       {/* ── Right Content ── */}
       <main className="content">
         <div className="content-inner">
-          <div className="content-header">
-            <h2 className="section-title">New Entry</h2>
-            <span className="char-count">{note.length} chars</span>
-          </div>
 
-          <div className="divider" />
+          {!showNotes ? (
+            <>
+              <div className="content-header">
+                <h2 className="section-title">New Entry</h2>
+                <span className="char-count">{note.length} chars</span>
+              </div>
 
-          <textarea
-            className="note-input"
-            placeholder="Begin writing..."
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
+              <div className="divider" />
 
-          <div className="actions">
-            <button
-              className={`save-btn ${saved ? "saved" : ""}`}
-              onClick={saveNote}
-              disabled={!note.trim()}
-            >
-              {saved ? "✓  Note Saved" : "Save Note"}
-            </button>
-          </div>
+              <textarea
+                className="note-input"
+                placeholder="Begin writing..."
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
 
-          {/* ── Saved Notes List ── */}
-          <div className="notes-list">
-            <div className="divider" />
-            <h2 className="section-title">Saved Notes</h2>
-            {notes.length === 0 ? (
-              <p className="empty-msg">No notes yet. Write something!</p>
-            ) : (
-              notes.map((n) => (
-                <div className="note-card" key={n.id}>
-                  <p className="note-text">{n.text}</p>
-                  <span className="note-date">
-                    {n.createdAt?.toDate?.().toLocaleString("en-US") ?? ""}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
+              <div className="actions">
+                <button
+                  className={`save-btn ${saved ? "saved" : ""}`}
+                  onClick={saveNote}
+                  disabled={!note.trim()}
+                >
+                  {saved ? "✓  Note Saved" : "Save Note"}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="content-header">
+                <h2 className="section-title">Saved Notes</h2>
+                <span className="char-count">{notes.length} notes</span>
+              </div>
+
+              <div className="divider" />
+
+              {notes.length === 0 ? (
+                <p className="empty-msg">No notes yet. Write something!</p>
+              ) : (
+                notes.map((n) => (
+                  <div className="note-card" key={n.id}>
+                    <p className="note-text">{n.text}</p>
+                    <span className="note-date">
+                      {n.createdAt?.toDate?.().toLocaleString("en-US") ?? ""}
+                    </span>
+                  </div>
+                ))
+              )}
+            </>
+          )}
 
         </div>
       </main>
