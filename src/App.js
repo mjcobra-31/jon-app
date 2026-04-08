@@ -1,11 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, orderBy, query } from "firebase/firestore";
 import "./App.css";
 
 function App() {
   const [note, setNote] = useState("");
   const [saved, setSaved] = useState(false);
+  const [notes, setNotes] = useState([]);
+
+  const fetchNotes = async () => {
+    const q = query(collection(db, "notes"), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+    setNotes(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+  };
+
+  useEffect(() => {
+    fetchNotes();
+  }, []);
 
   const saveNote = async () => {
     await addDoc(collection(db, "notes"), {
@@ -15,6 +26,7 @@ function App() {
     setSaved(true);
     setNote("");
     setTimeout(() => setSaved(false), 3000);
+    fetchNotes(); // refresh the list after saving
   };
 
   const now = new Date();
@@ -80,6 +92,25 @@ function App() {
               {saved ? "✓  Note Saved" : "Save Note"}
             </button>
           </div>
+
+          {/* ── Saved Notes List ── */}
+          <div className="notes-list">
+            <div className="divider" />
+            <h2 className="section-title">Saved Notes</h2>
+            {notes.length === 0 ? (
+              <p className="empty-msg">No notes yet. Write something!</p>
+            ) : (
+              notes.map((n) => (
+                <div className="note-card" key={n.id}>
+                  <p className="note-text">{n.text}</p>
+                  <span className="note-date">
+                    {n.createdAt?.toDate?.().toLocaleString("en-US") ?? ""}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+
         </div>
       </main>
 
